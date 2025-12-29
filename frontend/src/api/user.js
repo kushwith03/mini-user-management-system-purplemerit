@@ -1,13 +1,13 @@
 import http from "./http";
 
-export const getCurrentUser = () => {
+export const getProfile = () => {
   return http.get("/users/me");
 };
 
-export const updateProfile = (data) => {
-  return http.put("/users/me", data);
+export const updateProfile = (profileData) => {
+  return http.put("/users/me", profileData);
 };
 
-export const changePassword = (data) => {
-  return http.put("/users/change-password", data);
+export const updatePassword = (passwordData) => {
+  return http.put("/users/me/password", passwordData);
 };

@@ -1,13 +1,13 @@
 import http from "./http";
 
-export const signup = (data) => {
-  return http.post("/auth/signup", data);
+export const signup = (userData) => {
+  return http.post("/auth/signup", userData);
 };
 
-export const login = (data) => {
-  return http.post("/auth/login", data);
+export const login = (credentials) => {
+  return http.post("/auth/login", credentials);
 };
 
 export const logout = () => {
-  localStorage.removeItem("auth_token");
+  return http.post("/auth/logout");
 };
