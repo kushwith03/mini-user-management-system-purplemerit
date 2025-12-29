@@ -1,4 +1,3 @@
-frontend / src / api / auth.js;
 import http from "./http";
 
 export const signup = (data) => {

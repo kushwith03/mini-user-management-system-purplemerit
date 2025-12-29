@@ -1,7 +1,12 @@
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+
 function App() {
   return (
     <div>
-      <h1>Mini User Management System</h1>
+      <Signup />
+      <hr />
+      <Login />
     </div>
   );
 }
