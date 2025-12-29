@@ -57,7 +57,7 @@ const AdminDashboard = () => {
     try {
       await apiCall(user.id);
       toast.success(successMessage);
-      fetchUsers(page); // Refresh user list on the current page
+      fetchUsers(page);
     } catch (err) {
       toast.error(err.response?.data?.message || errorMessage);
     } finally {

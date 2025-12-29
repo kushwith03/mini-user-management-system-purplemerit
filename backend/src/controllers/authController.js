@@ -4,9 +4,6 @@ const userModel = require("../models/userModel");
 const { hashPassword, comparePassword } = require("../utils/password");
 const { generateToken } = require("../utils/jwt");
 
-/**
- * User Signup
- */
 async function signup(req, res) {
   const { fullName, email, password } = req.body;
 
@@ -42,9 +39,6 @@ async function signup(req, res) {
   }
 }
 
-/**
- * User Login
- */
 async function login(req, res) {
   const { email, password } = req.body;
 

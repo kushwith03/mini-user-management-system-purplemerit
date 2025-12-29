@@ -54,7 +54,6 @@ export const AuthProvider = ({ children }) => {
       setToken(token);
       setUser(user);
     } catch (err) {
-      // Re-throw the error to be caught in the component
       throw err;
     }
   };
@@ -68,7 +67,6 @@ export const AuthProvider = ({ children }) => {
       setToken(token);
       setUser(user);
     } catch (err) {
-      // Re-throw the error to be caught in the component
       throw err;
     }
   };

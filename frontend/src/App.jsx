@@ -11,15 +11,16 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Spinner from "./components/Spinner";
 
-// Page Imports
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import Footer from "./components/Footer";
 
 const AppRoutes = () => {
   const { user, loading, isAuthenticated } = useAuth();
+
 
   if (loading) {
     return <Spinner fullPage={true} />;
@@ -94,6 +95,7 @@ const App = () => {
         <main>
           <AppRoutes />
         </main>
+        <Footer />
       </AuthProvider>
     </Router>
   );

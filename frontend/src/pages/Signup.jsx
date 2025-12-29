@@ -30,7 +30,6 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Trigger blur validation on all fields before submitting
     const newErrors = {
       fullName: validateFullName(formData.fullName),
       email: validateEmail(formData.email),
