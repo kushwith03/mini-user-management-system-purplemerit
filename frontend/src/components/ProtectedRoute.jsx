@@ -1,14 +1,14 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../auth/useAuth";
-import Loader from "./Loader";
+import { useAuth } from "../auth/AuthContext";
+import Spinner from "./Spinner";
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <Loader />;
+    return <Spinner fullPage={true} />;
   }
 
   if (!isAuthenticated) {

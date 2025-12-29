@@ -1,120 +1,119 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/useAuth";
-
-const formContainerStyle = {
-  display: "flex",
-  flexDirection: "column",
-  maxWidth: "400px",
-  margin: "5rem auto",
-  padding: "2rem",
-  border: "1px solid #ccc",
-  borderRadius: "8px",
-};
-
-const inputGroupStyle = {
-  marginBottom: "1rem",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "0.5rem",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.5rem",
-  fontSize: "1rem",
-};
-
-const buttonStyle = {
-  padding: "0.75rem",
-  fontSize: "1rem",
-  cursor: "pointer",
-};
-
-const errorStyle = {
-  color: "red",
-  marginTop: "1rem",
-};
+import React, { useState, useMemo } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useAuth } from "../auth/AuthContext";
+import { validateEmail, validatePassword, validateFullName } from "../utils/validators";
+import Card from "../components/Card";
+import styles from "./Signup.module.css";
 
 const Signup = () => {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ fullName: "", email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const auth = useAuth();
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleBlur = (e) => {
+    const { id, value } = e.target;
+    let error = "";
+    if (id === "fullName") error = validateFullName(value);
+    if (id === "email") error = validateEmail(value);
+    if (id === "password") error = validatePassword(value);
+    setErrors(prev => ({ ...prev, [id]: error }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    // Trigger blur validation on all fields before submitting
+    const newErrors = {
+      fullName: validateFullName(formData.fullName),
+      email: validateEmail(formData.email),
+      password: validatePassword(formData.password),
+    };
+    setErrors(newErrors);
+    
+    const isSubmittable = Object.values(newErrors).every(err => !err);
+    if (!isSubmittable) return;
 
+    setLoading(true);
     try {
-      await auth.signup({ fullName, email, password });
+      await auth.signup(formData);
+      toast.success("Signup successful! Welcome.");
       navigate("/");
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Signup failed. Please try again.";
-      setError(message);
+      const message = err.response?.data?.message || "Signup failed. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={formContainerStyle}>
-      <h2>Signup</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={inputGroupStyle}>
-          <label htmlFor="fullName" style={labelStyle}>
-            Full Name
-          </label>
+    <Card title="Create an Account">
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
+        <div className={styles.inputGroup}>
+          <label htmlFor="fullName">Full Name</label>
           <input
             type="text"
             id="fullName"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            value={formData.fullName}
+            onChange={handleChange}
+            onBlur={handleBlur}
             required
-            style={inputStyle}
+            placeholder="John Doe"
+            aria-describedby="fullName-error"
           />
+          <div id="fullName-error" className={styles.errorText} aria-live="polite">
+            {errors.fullName}
+          </div>
         </div>
-        <div style={inputGroupStyle}>
-          <label htmlFor="email" style={labelStyle}>
-            Email
-          </label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="email">Email</label>
           <input
             type="email"
             id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
             required
-            style={inputStyle}
+            placeholder="you@example.com"
+            aria-describedby="email-error"
           />
+          <div id="email-error" className={styles.errorText} aria-live="polite">
+            {errors.email}
+          </div>
         </div>
-        <div style={inputGroupStyle}>
-          <label htmlFor="password" style={labelStyle}>
-            Password
-          </label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
             required
             minLength="6"
-            style={inputStyle}
+            placeholder="Minimum 6 characters"
+            aria-describedby="password-error"
           />
+          <div id="password-error" className={styles.errorText} aria-live="polite">
+            {errors.password}
+          </div>
         </div>
-        <button type="submit" disabled={loading} style={buttonStyle}>
-          {loading ? "Signing up..." : "Signup"}
+        <button type="submit" disabled={loading} className={`${styles.submitButton} button-primary`}>
+          {loading ? "Creating account..." : "Sign Up"}
         </button>
-        {error && <p style={errorStyle}>{error}</p>}
       </form>
-    </div>
+      <p className={styles.footerText}>
+        Already have an account? <Link to="/login">Log in</Link>
+      </p>
+    </Card>
   );
 };
 

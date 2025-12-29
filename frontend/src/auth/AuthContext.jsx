@@ -1,63 +1,81 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import * as authApi from "../api/auth";
 import * as userApi from "../api/user";
+import http from "../api/http";
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      const isExpired = decodedToken.exp * 1000 < Date.now();
-      if (isExpired) {
-        logout();
-      } else {
-        fetchUserProfile();
-      }
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+  const logout = useCallback(() => {
+    authApi.logout().catch(err => console.error("Logout API call failed, proceeding with client-side logout.", err));
+    localStorage.removeItem("token");
+    http.defaults.headers.common['Authorization'] = null;
+    setToken(null);
+    setUser(null);
+    setLoading(false);
+  }, []);
 
-  const fetchUserProfile = async () => {
-    try {
-      const response = await userApi.getProfile();
-      setUser(response.data);
-    } catch (error) {
-      console.error("Failed to fetch user profile", error);
-      logout(); // Token might be invalid
-    } finally {
+  useEffect(() => {
+    const fetchUserOnLoad = async () => {
+      if (token) {
+        try {
+          const decodedToken = jwtDecode(token);
+          if (decodedToken.exp * 1000 < Date.now()) {
+            logout();
+            return;
+          }
+          
+          http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const response = await userApi.getProfile();
+          setUser(response.data);
+
+        } catch (error) {
+          console.error("Failed to fetch user profile on load", error);
+          logout();
+        }
+      }
       setLoading(false);
-    }
-  };
+    };
+
+    fetchUserOnLoad();
+  }, [token, logout]);
 
   const login = async (credentials) => {
-    const response = await authApi.login(credentials);
-    const { token, user } = response.data;
-    localStorage.setItem("token", token);
-    setToken(token);
-    setUser(user);
+    try {
+      const response = await authApi.login(credentials);
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
+      http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setToken(token);
+      setUser(user);
+    } catch (err) {
+      // Re-throw the error to be caught in the component
+      throw err;
+    }
   };
 
   const signup = async (userData) => {
-    const response = await authApi.signup(userData);
-    const { token, user } = response.data;
-    localStorage.setItem("token", token);
-    setToken(token);
-    setUser(user);
+    try {
+      const response = await authApi.signup(userData);
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
+      http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setToken(token);
+      setUser(user);
+    } catch (err) {
+      // Re-throw the error to be caught in the component
+      throw err;
+    }
   };
-
-  const logout = () => {
-    authApi.logout().catch(err => console.error("Logout API call failed, proceeding with client-side logout.", err));
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-  };
+  
+  const updateUser = (updatedUserData) => {
+    setUser(currentUser => ({...currentUser, ...updatedUserData}));
+  }
 
   const value = {
     user,
@@ -66,8 +84,17 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

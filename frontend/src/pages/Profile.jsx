@@ -1,177 +1,174 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import toast from "react-hot-toast";
 import * as userApi from "../api/user";
-import { useAuth } from "../auth/useAuth";
-
-const profileContainerStyle = {
-  maxWidth: "600px",
-  margin: "2rem auto",
-  padding: "2rem",
-  border: "1px solid #ccc",
-  borderRadius: "8px",
-};
-
-const formStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "1rem",
-};
-
-const inputGroupStyle = {
-  display: "flex",
-  flexDirection: "column",
-};
-
-const labelStyle = {
-  marginBottom: "0.5rem",
-};
-
-const inputStyle = {
-  padding: "0.5rem",
-  fontSize: "1rem",
-};
-
-const buttonStyle = {
-  padding: "0.75rem",
-  fontSize: "1rem",
-  cursor: "pointer",
-  marginTop: "1rem",
-};
-
-const messageStyle = {
-  marginTop: "1rem",
-  padding: "1rem",
-  borderRadius: "4px",
-};
-
-const successStyle = { ...messageStyle, backgroundColor: "#d4edda", color: "#155724" };
-const errorStyle = { ...messageStyle, backgroundColor: "#f8d7da", color: "#721c24" };
+import { useAuth } from "../auth/AuthContext";
+import { validateEmail, validateFullName, validatePassword } from "../utils/validators";
+import Card from "../components/Card";
+import styles from "./Profile.module.css";
 
 const Profile = () => {
-  const { user, loading: authLoading } = useAuth();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [profileMessage, setProfileMessage] = useState({ type: "", text: "" });
-  const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
+  const { user, updateUser } = useAuth();
+  
+  const [profileData, setProfileData] = useState({ fullName: user?.full_name || "", email: user?.email || "" });
+  const [profileErrors, setProfileErrors] = useState({});
   const [profileSubmitting, setProfileSubmitting] = useState(false);
+
+  const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "" });
+  const [passwordErrors, setPasswordErrors] = useState({});
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setFullName(user.full_name || "");
-      setEmail(user.email || "");
+  const handleProfileChange = (e) => {
+    const { id, value } = e.target;
+    setProfileData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { id, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleBlur = (e, formType) => {
+    const { id, value } = e.target;
+    let error = "";
+    if (id === "fullName") error = validateFullName(value);
+    if (id === "email") error = validateEmail(value);
+    if (id === "newPassword") error = validatePassword(value);
+    
+    if (formType === 'profile') {
+      setProfileErrors(prev => ({ ...prev, [id]: error }));
+    } else {
+      setPasswordErrors(prev => ({ ...prev, [id]: error }));
     }
-  }, [user]);
+  };
+
+  const isProfileFormValid = useMemo(() => {
+    return Object.values(profileErrors).every(err => !err) && Object.values(profileData).every(field => field);
+  }, [profileErrors, profileData]);
+
+  const isPasswordFormValid = useMemo(() => {
+    return Object.values(passwordErrors).every(err => !err) && Object.values(passwordData).every(field => field);
+  }, [passwordErrors, passwordData]);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setProfileMessage({ type: "", text: "" });
+    if (!isProfileFormValid) return;
     setProfileSubmitting(true);
     try {
-      await userApi.updateProfile({ fullName, email });
-      setProfileMessage({ type: "success", text: "Profile updated successfully!" });
+      const updatedUser = await userApi.updateProfile(profileData);
+      updateUser(updatedUser.data);
+      toast.success("Profile updated successfully!");
     } catch (err) {
-      const text = err.response?.data?.message || "Failed to update profile.";
-      setProfileMessage({ type: "error", text });
+      const message = err.response?.data?.message || "Failed to update profile.";
+      toast.error(message);
     } finally {
       setProfileSubmitting(false);
     }
   };
 
-  const handlePasswordChange = async (e) => {
+  const handlePasswordUpdate = async (e) => {
     e.preventDefault();
-    setPasswordMessage({ type: "", text: "" });
+    if (!isPasswordFormValid) return;
     setPasswordSubmitting(true);
     try {
-      await userApi.updatePassword({ currentPassword, newPassword });
-      setPasswordMessage({ type: "success", text: "Password changed successfully!" });
-      setCurrentPassword("");
-      setNewPassword("");
+      await userApi.updatePassword(passwordData);
+      toast.success("Password changed successfully!");
+      setPasswordData({ currentPassword: "", newPassword: "" });
+      setPasswordErrors({});
     } catch (err) {
-      const text = err.response?.data?.message || "Failed to change password.";
-      setPasswordMessage({ type: "error", text });
+      const message = err.response?.data?.message || "Failed to change password.";
+      toast.error(message);
     } finally {
       setPasswordSubmitting(false);
     }
   };
 
-  if (authLoading) {
-    return <div>Loading profile...</div>;
-  }
+  const handleProfileCancel = () => {
+    setProfileData({ fullName: user?.full_name || "", email: user?.email || "" });
+    setProfileErrors({});
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordData({ currentPassword: "", newPassword: "" });
+    setPasswordErrors({});
+  };
 
   return (
-    <div style={profileContainerStyle}>
-      <h2>Edit Profile</h2>
-      <form onSubmit={handleProfileUpdate} style={formStyle}>
-        <div style={inputGroupStyle}>
-          <label htmlFor="fullName" style={labelStyle}>Full Name</label>
-          <input
-            type="text"
-            id="fullName"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            style={inputStyle}
-            required
-          />
-        </div>
-        <div style={inputGroupStyle}>
-          <label htmlFor="email" style={labelStyle}>Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-            required
-          />
-        </div>
-        <button type="submit" disabled={profileSubmitting} style={buttonStyle}>
-          {profileSubmitting ? "Updating..." : "Update Profile"}
-        </button>
-        {profileMessage.text && (
-          <div style={profileMessage.type === 'success' ? successStyle : errorStyle}>
-            {profileMessage.text}
+    <div className={styles.container}>
+      <Card title="Edit Profile">
+        <form onSubmit={handleProfileUpdate} className={styles.form} noValidate>
+          <div className={styles.inputGroup}>
+            <label htmlFor="fullName">Full Name</label>
+            <input
+              type="text"
+              id="fullName"
+              value={profileData.fullName}
+              onChange={handleProfileChange}
+              onBlur={(e) => handleBlur(e, 'profile')}
+              required
+              aria-describedby="profile-fullName-error"
+            />
+            <div id="profile-fullName-error" className={styles.errorText} aria-live="polite">{profileErrors.fullName}</div>
           </div>
-        )}
-      </form>
-
-      <hr style={{ margin: "2rem 0" }} />
-
-      <h2>Change Password</h2>
-      <form onSubmit={handlePasswordChange} style={formStyle}>
-        <div style={inputGroupStyle}>
-          <label htmlFor="currentPassword" style={labelStyle}>Current Password</label>
-          <input
-            type="password"
-            id="currentPassword"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            style={inputStyle}
-            required
-          />
-        </div>
-        <div style={inputGroupStyle}>
-          <label htmlFor="newPassword" style={labelStyle}>New Password</label>
-          <input
-            type="password"
-            id="newPassword"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            style={inputStyle}
-            required
-            minLength="6"
-          />
-        </div>
-        <button type="submit" disabled={passwordSubmitting} style={buttonStyle}>
-          {passwordSubmitting ? "Changing..." : "Change Password"}
-        </button>
-        {passwordMessage.text && (
-          <div style={passwordMessage.type === 'success' ? successStyle : errorStyle}>
-            {passwordMessage.text}
+          <div className={styles.inputGroup}>
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={profileData.email}
+              onChange={handleProfileChange}
+              onBlur={(e) => handleBlur(e, 'profile')}
+              required
+              aria-describedby="profile-email-error"
+            />
+            <div id="profile-email-error" className={styles.errorText} aria-live="polite">{profileErrors.email}</div>
           </div>
-        )}
-      </form>
+          <div className={styles.buttonGroup}>
+            <button type="button" onClick={handleProfileCancel} className="button-secondary">
+              Cancel
+            </button>
+            <button type="submit" disabled={profileSubmitting || !isProfileFormValid} className="button-primary">
+              {profileSubmitting ? "Updating..." : "Update Profile"}
+            </button>
+          </div>
+        </form>
+      </Card>
+
+      <Card title="Change Password">
+        <form onSubmit={handlePasswordUpdate} className={styles.form} noValidate>
+          <div className={styles.inputGroup}>
+            <label htmlFor="currentPassword">Current Password</label>
+            <input
+              type="password"
+              id="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordChange}
+              required
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label htmlFor="newPassword">New Password</label>
+            <input
+              type="password"
+              id="newPassword"
+              value={passwordData.newPassword}
+              onChange={handlePasswordChange}
+              onBlur={(e) => handleBlur(e, 'password')}
+              required
+              minLength="6"
+              aria-describedby="password-new-error"
+            />
+            <div id="password-new-error" className={styles.errorText} aria-live="polite">{passwordErrors.newPassword}</div>
+          </div>
+          <div className={styles.buttonGroup}>
+            <button type="button" onClick={handlePasswordCancel} className="button-secondary">
+              Cancel
+            </button>
+            <button type="submit" disabled={passwordSubmitting || !isPasswordFormValid} className="button-primary">
+              {passwordSubmitting ? "Changing..." : "Change Password"}
+            </button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 };

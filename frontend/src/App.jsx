@@ -5,11 +5,11 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthProvider, AuthContext } from "./auth/AuthContext";
-import { useAuth } from "./auth/useAuth";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Loader from "./components/Loader";
+import Spinner from "./components/Spinner";
 
 // Page Imports
 import Login from "./pages/Login";
@@ -22,10 +22,10 @@ const AppRoutes = () => {
   const { user, loading, isAuthenticated } = useAuth();
 
   if (loading) {
-    return <Loader />;
+    return <Spinner fullPage={true} />;
   }
 
-  const Home = () => {
+  const HomeRedirect = () => {
     if (!isAuthenticated) {
       return <Navigate to="/login" />;
     }
@@ -38,9 +38,15 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route path="/" element={<HomeRedirect />} />
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/" /> : <Login />}
+      />
+      <Route
+        path="/signup"
+        element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
+      />
       <Route
         path="/dashboard"
         element={
@@ -65,7 +71,15 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+      <Route
+        path="/unauthorized"
+        element={
+          <div style={{ textAlign: "center", marginTop: "4rem" }}>
+            <h1>403 - Unauthorized</h1>
+            <p>You do not have permission to access this page.</p>
+          </div>
+        }
+      />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
@@ -75,6 +89,7 @@ const App = () => {
   return (
     <Router>
       <AuthProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         <Navbar />
         <main>
           <AppRoutes />

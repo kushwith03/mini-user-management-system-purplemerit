@@ -1,0 +1,41 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Reduced gap for error message spacing */
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-weight: 500;
+}
+
+.errorText {
+  color: var(--danger-color);
+  font-size: 0.8rem;
+  min-height: 1rem; /* Reserve space to prevent layout shifts */
+}
+
+.footerText {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.footerText a {
+  color: var(--primary-color);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footerText a:hover {
+  text-decoration: underline;
+}
+
+.submitButton {
+  margin-top: 1rem;
+}
