@@ -5,6 +5,7 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 ## Tech Stack
 
 **Backend:**
+
 - **Node.js** with **Express.js**
 - **PostgreSQL** for the database
 - **JWT (JSON Web Tokens)** for authentication
@@ -12,6 +13,7 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 - **Jest** & **Supertest** for unit testing
 
 **Frontend:**
+
 - **React** (with Vite)
 - **React Router** for client-side routing
 - **React Context API** for global state management
@@ -23,7 +25,7 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 
 - **Backend API:** `https://mini-user-management-backend.onrender.com`
 - **API Health Check:** `https://mini-user-management-backend.onrender.com/health`
-- **Frontend Application:** `[Link to your deployed Vercel/Netlify URL]`
+- **Frontend Application:** `https://mini-user-management-system-purplem.vercel.app/`
 
 ## Features
 
@@ -41,6 +43,7 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 ## Project Setup
 
 ### Prerequisites
+
 - Node.js (v18 or higher)
 - npm
 - A running PostgreSQL instance
@@ -48,21 +51,25 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 ### Backend Setup
 
 1.  **Clone the repository:**
+
     ```bash
     git clone https://github.com/kushwith03/mini-user-management-system-purplemerit.git
     cd mini-user-management-system-purplemerit/backend
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     npm install
     ```
 
 3.  **Set up environment variables:**
     Create a `.env` file in the `backend` directory by copying the example file:
+
     ```bash
     cp .env.example .env
     ```
+
     Fill in the required variables, especially `DATABASE_URL` and `JWT_SECRET`.
 
 4.  **Run database migrations:**
@@ -76,11 +83,13 @@ This is a full-stack user management system featuring a Node.js/Express backend 
 ### Frontend Setup
 
 1.  **Navigate to the frontend directory:**
+
     ```bash
     cd ../frontend
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     npm install
     ```
